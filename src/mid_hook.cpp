@@ -48,7 +48,7 @@ MidHook& MidHook::operator=(MidHook&& other) noexcept {
         m_stub = std::move(other.m_stub);
         m_destination = other.m_destination;
 
-        other.m_target = 0;
+        other.m_target = nullptr;
         other.m_destination = nullptr;
     }
 

@@ -241,7 +241,7 @@ std::expected<uint8_t*, Allocator::Error> Allocator::allocate_nearby_memory(
             continue;
         }
 
-        if (auto allocation_address = attempt_allocation(p); allocation_address != 0) {
+        if (auto allocation_address = attempt_allocation(p); allocation_address != nullptr) {
             return allocation_address;
         }
     }

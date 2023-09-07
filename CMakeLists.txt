@@ -29,18 +29,21 @@ option(SAFETYHOOK_BUILD_DOCS "" OFF)
 option(SAFETYHOOK_BUILD_TESTS "" OFF)
 option(SAFETYHOOK_AMALGAMATE "" OFF)
 option(SAFETYHOOK_FETCH_ZYDIS "" OFF)
+option(SAFETYHOOK_FETCH_BDDISASM "" OFF)
+option(SAFETYHOOK_USE_ZYDIS "" OFF)
+option(SAFETYHOOK_USE_BDDISASM "" OFF)
 
 project(safetyhook)
 
 include(FetchContent)
 
 if(SAFETYHOOK_BUILD_TESTS) # build-tests
-	message(STATUS "Fetching Catch2 (v3.3.2)...")
+	message(STATUS "Fetching Catch2 (v3.4.0)...")
 	FetchContent_Declare(Catch2
 		GIT_REPOSITORY
 			"https://github.com/catchorg/Catch2.git"
 		GIT_TAG
-			v3.3.2
+			v3.4.0
 		GIT_SHALLOW
 			ON
 	)
@@ -48,12 +51,12 @@ if(SAFETYHOOK_BUILD_TESTS) # build-tests
 
 endif()
 if(SAFETYHOOK_BUILD_TESTS) # build-tests
-	message(STATUS "Fetching xbyak (v6.69)...")
+	message(STATUS "Fetching xbyak (v6.73)...")
 	FetchContent_Declare(xbyak
 		GIT_REPOSITORY
 			"https://github.com/herumi/xbyak.git"
 		GIT_TAG
-			v6.69
+			v6.73
 		GIT_SHALLOW
 			ON
 	)
@@ -75,6 +78,19 @@ if(SAFETYHOOK_FETCH_ZYDIS) # fetch-zydis
 			ON
 	)
 	FetchContent_MakeAvailable(Zydis)
+
+endif()
+if(SAFETYHOOK_FETCH_BDDISASM) # fetch-bddisasm
+	message(STATUS "Fetching bddisasm (v1.37.0)...")
+	FetchContent_Declare(bddisasm
+		GIT_REPOSITORY
+			"https://github.com/bitdefender/bddisasm.git"
+		GIT_TAG
+			v1.37.0
+		GIT_SHALLOW
+			ON
+	)
+	FetchContent_MakeAvailable(bddisasm)
 
 endif()
 # Packages
@@ -140,10 +156,19 @@ target_include_directories(safetyhook PUBLIC
 	"include/"
 )
 
-target_link_libraries(safetyhook PUBLIC
-	Zydis
-	ntdll
-)
+if(SAFETYHOOK_USE_ZYDIS) # use-zydis
+	target_link_libraries(safetyhook PUBLIC
+		Zydis
+		ntdll
+	)
+endif()
+
+if(SAFETYHOOK_USE_BDDISASM) # use-bddisasm
+	target_link_libraries(safetyhook PUBLIC
+		bddisasm::bddisasm
+		ntdll
+	)
+endif()
 
 # Target: docs
 if(SAFETYHOOK_BUILD_DOCS) # build-docs
@@ -614,11 +639,21 @@ if(SAFETYHOOK_BUILD_TESTS) # build-tests
 			"amalgamated-dist/"
 		)
 
-		target_link_libraries(unittest-amalgamated PRIVATE
-			Zydis
-			Catch2::Catch2WithMain
-			xbyak::xbyak
-		)
+		if(SAFETYHOOK_USE_ZYDIS) # use-zydis
+			target_link_libraries(unittest-amalgamated PRIVATE
+				Zydis
+				Catch2::Catch2WithMain
+				xbyak::xbyak
+			)
+		endif()
+
+		if(SAFETYHOOK_USE_BDDISASM) # use-bddisasm
+			target_link_libraries(unittest-amalgamated PRIVATE
+				bddisasm::bddisasm
+				Catch2::Catch2WithMain
+				xbyak::xbyak
+			)
+		endif()
 
 		get_directory_property(CMKR_VS_STARTUP_PROJECT DIRECTORY ${PROJECT_SOURCE_DIR} DEFINITION VS_STARTUP_PROJECT)
 		if(NOT CMKR_VS_STARTUP_PROJECT)

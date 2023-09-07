@@ -7,6 +7,9 @@ SAFETYHOOK_BUILD_DOCS = false
 SAFETYHOOK_BUILD_TESTS = false
 SAFETYHOOK_AMALGAMATE = false
 SAFETYHOOK_FETCH_ZYDIS = false
+SAFETYHOOK_FETCH_BDDISASM = false
+SAFETYHOOK_USE_ZYDIS = false
+SAFETYHOOK_USE_BDDISASM = false
 
 [conditions]
 build-docs = "SAFETYHOOK_BUILD_DOCS"
@@ -14,17 +17,20 @@ build-tests = "SAFETYHOOK_BUILD_TESTS"
 amalgamate = "SAFETYHOOK_AMALGAMATE"
 build-amalgamate-tests = "SAFETYHOOK_BUILD_TESTS AND SAFETYHOOK_AMALGAMATE"
 fetch-zydis = "SAFETYHOOK_FETCH_ZYDIS"
+fetch-bddisasm = "SAFETYHOOK_FETCH_BDDISASM"
+use-zydis = "SAFETYHOOK_USE_ZYDIS"
+use-bddisasm = "SAFETYHOOK_USE_BDDISASM"
 
 [fetch-content.Catch2]
 condition = "build-tests"
 git = "https://github.com/catchorg/Catch2.git"
-tag = "v3.3.2"
+tag = "v3.4.0"
 shallow = true
 
 [fetch-content.xbyak]
 condition = "build-tests"
 git = "https://github.com/herumi/xbyak.git"
-tag = "v6.69"
+tag = "v6.73"
 shallow = true
 
 [fetch-content.Zydis]
@@ -37,6 +43,12 @@ option(ZYDIS_BUILD_EXAMPLES "" OFF)
 option(ZYDIS_BUILD_TOOLS "" OFF)
 option(ZYDIS_BUILD_DOXYGEN "" OFF)
 """
+
+[fetch-content.bddisasm]
+condition = "fetch-bddisasm"
+git = "https://github.com/bitdefender/bddisasm.git"
+tag = "v1.37.0"
+shallow = true
 
 [find-package.Doxygen]
 condition = "build-docs"
@@ -52,7 +64,8 @@ sources = ["src/*.cpp"]
 include-directories = ["include/"]
 compile-features = ["cxx_std_23"]
 alias = "safetyhook::safetyhook"
-link-libraries = ["Zydis", "ntdll"]
+use-zydis.link-libraries = ["Zydis", "ntdll"]
+use-bddisasm.link-libraries = ["bddisasm::bddisasm", "ntdll"]
 msvc.private-compile-options = ["/permissive-", "/W4", "/w14640"]
 clang.private-compile-options = ["-Wall", "-Wextra", "-Wshadow", "-Wnon-virtual-dtor", "-pedantic"]
 gcc.private-compile-options = ["-Wall", "-Wextra", "-Wshadow", "-Wnon-virtual-dtor", "-pedantic"]
@@ -143,7 +156,8 @@ condition = "build-amalgamate-tests"
 type = "test"
 sources = ["unittest/*.cpp", "amalgamated-dist/safetyhook.cpp"]
 include-directories = ["amalgamated-dist/"]
-link-libraries = ["Zydis", "Catch2::Catch2WithMain", "xbyak::xbyak"]
+use-zydis.link-libraries = ["Zydis", "Catch2::Catch2WithMain", "xbyak::xbyak"]
+use-bddisasm.link-libraries = ["bddisasm::bddisasm", "Catch2::Catch2WithMain", "xbyak::xbyak"]
 cmake-after = """
 add_dependencies(unittest-amalgamated Amalgamate)
 """
