@@ -16,11 +16,11 @@ int main() {
     std::println("unhooked add(2, 3) = {}", add(2, 3));
 
     // Create a hook on add.
-    g_add_hook = safetyhook::create_inline(reinterpret_cast<void*>(add), reinterpret_cast<void*>(hook_add));
+    g_add_hook = safetyhook::create_inline(add, hook_add);
 
     std::println("hooked add(3, 4) = {}", add(3, 4));
 
-    g_add_hook = {};
+    g_add_hook = {}; // or `g_add_hook.reset();`
 
     std::println("unhooked add(5, 6) = {}", add(5, 6));
 

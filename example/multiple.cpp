@@ -2,7 +2,7 @@
 
 #include <safetyhook.hpp>
 
-SafetyHookInline hook0, hook1, hook2, hook3;
+SafetyHookInline hook0{}, hook1{}, hook2{}, hook3{};
 
 SAFETYHOOK_NOINLINE void say_hi(const std::string& name) {
     std::println("hello {}", name);
@@ -25,10 +25,10 @@ void hook3_fn(const std::string& name) {
 }
 
 int main() {
-    hook0 = safetyhook::create_inline(reinterpret_cast<void*>(say_hi), reinterpret_cast<void*>(hook0_fn));
-    hook1 = safetyhook::create_inline(reinterpret_cast<void*>(say_hi), reinterpret_cast<void*>(hook1_fn));
-    hook2 = safetyhook::create_inline(reinterpret_cast<void*>(say_hi), reinterpret_cast<void*>(hook2_fn));
-    hook3 = safetyhook::create_inline(reinterpret_cast<void*>(say_hi), reinterpret_cast<void*>(hook3_fn));
+    hook0 = safetyhook::create_inline(say_hi, hook0_fn);
+    hook1 = safetyhook::create_inline(say_hi, hook1_fn);
+    hook2 = safetyhook::create_inline(say_hi, hook2_fn);
+    hook3 = safetyhook::create_inline(say_hi, hook3_fn);
 
     say_hi("world");
 

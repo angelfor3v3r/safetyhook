@@ -38,16 +38,16 @@ int main() {
     ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LEGACY_32, ZYDIS_STACK_WIDTH_32);
 #endif
 
-    auto ip = reinterpret_cast<uint8_t*>(add_42);
+    auto* ip = reinterpret_cast<uint8_t*>(add_42);
 
     while (*ip != 0xC3) {
         ZydisDecodedInstruction ix{};
 
-        ZydisDecoderDecodeInstruction(&decoder, nullptr, reinterpret_cast<void*>(ip), 15, &ix);
+        ZydisDecoderDecodeInstruction(&decoder, nullptr, ip, 15, &ix);
 
         // Follow JMPs
         if (ix.opcode == 0xE9) {
-            ip += ix.length + (int32_t)ix.raw.imm[0].value.s;
+            ip += ix.length + static_cast<int32_t>(ix.raw.imm[0].value.s);
         } else {
             ip += ix.length;
         }

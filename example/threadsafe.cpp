@@ -9,12 +9,12 @@ SAFETYHOOK_NOINLINE void SayHello(int times) {
     std::println("Hello #{}", times);
 }
 
-void Hooked_SayHello(int times [[maybe_unused]]) {
+void Hooked_SayHello([[maybe_unused]] int times) {
     g_hook.call<void, int>(1337);
 }
 
 void SayHelloInfinitely() {
-    int count = 0;
+    int count{};
 
     while (true) {
         SayHello(count++);
@@ -26,11 +26,11 @@ int main() {
     std::thread t(SayHelloInfinitely);
     t.detach();
 
-    g_hook = safetyhook::create_inline(reinterpret_cast<void*>(SayHello), reinterpret_cast<void*>(Hooked_SayHello));
+    g_hook = safetyhook::create_inline(SayHello, Hooked_SayHello);
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    g_hook.reset();
+    g_hook = {};
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 

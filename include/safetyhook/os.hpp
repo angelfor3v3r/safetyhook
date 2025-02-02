@@ -10,7 +10,6 @@ import std.compat;
 #endif
 
 namespace safetyhook {
-
 enum class OsError {
     FAILED_TO_ALLOCATE,
     FAILED_TO_PROTECT,
@@ -24,11 +23,11 @@ enum class OsError {
 };
 
 struct VmAccess {
-    bool read : 1;
-    bool write : 1;
-    bool execute : 1;
+    bool read : 1 {};
+    bool write : 1 {};
+    bool execute : 1 {};
 
-    constexpr bool operator==(const VmAccess& other) const {
+    constexpr bool operator==(const VmAccess& other) const noexcept {
         return read == other.read && write == other.write && execute == other.execute;
     }
 };
@@ -39,10 +38,10 @@ constexpr VmAccess VM_ACCESS_RX{.read = true, .write = false, .execute = true};
 constexpr VmAccess VM_ACCESS_RWX{.read = true, .write = true, .execute = true};
 
 struct VmBasicInfo {
-    uint8_t* address;
-    size_t size;
-    VmAccess access;
-    bool is_free;
+    uint8_t* address{};
+    size_t size{};
+    VmAccess access{};
+    bool is_free{};
 };
 
 std::expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAccess access);
@@ -55,10 +54,10 @@ bool vm_is_writable(uint8_t* address, size_t size);
 bool vm_is_executable(uint8_t* address);
 
 struct SystemInfo {
-    uint32_t page_size;
-    uint32_t allocation_granularity;
-    uint8_t* min_address;
-    uint8_t* max_address;
+    uint32_t page_size{};
+    uint32_t allocation_granularity{};
+    uint8_t* min_address{};
+    uint8_t* max_address{};
 };
 
 SystemInfo system_info();

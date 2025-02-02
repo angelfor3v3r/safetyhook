@@ -16,7 +16,6 @@ import std.compat;
 #include "safetyhook/utility.hpp"
 
 namespace safetyhook {
-
 /// @brief A MidHook destination function.
 using MidHookFn = void (*)(Context& ctx);
 
@@ -40,14 +39,14 @@ public:
         /// @brief Create a BAD_ALLOCATION error.
         /// @param err The Allocator::Error that failed.
         /// @return The new BAD_ALLOCATION error.
-        [[nodiscard]] static Error bad_allocation(Allocator::Error err) {
+        [[nodiscard]] static Error bad_allocation(Allocator::Error err) noexcept {
             return {.type = BAD_ALLOCATION, .allocator_error = err};
         }
 
         /// @brief Create a BAD_INLINE_HOOK error.
         /// @param err The InlineHook::Error that failed.
         /// @return The new BAD_INLINE_HOOK error.
-        [[nodiscard]] static Error bad_inline_hook(InlineHook::Error err) {
+        [[nodiscard]] static Error bad_inline_hook(InlineHook::Error err) noexcept {
             return {.type = BAD_INLINE_HOOK, .inline_hook_error = err};
         }
     };
@@ -119,23 +118,23 @@ public:
 
     /// @brief Get a pointer to the target.
     /// @return A pointer to the target.
-    [[nodiscard]] uint8_t* target() const { return m_target; }
+    [[nodiscard]] uint8_t* target() const noexcept { return m_target; }
 
     /// @brief Get the address of the target.
     /// @return The address of the target.
-    [[nodiscard]] uintptr_t target_address() const { return reinterpret_cast<uintptr_t>(m_target); }
+    [[nodiscard]] uintptr_t target_address() const noexcept { return reinterpret_cast<uintptr_t>(m_target); }
 
     /// @brief Get the destination function.
     /// @return The destination function.
-    [[nodiscard]] MidHookFn destination() const { return m_destination; }
+    [[nodiscard]] MidHookFn destination() const noexcept { return m_destination; }
 
     /// @brief Returns a vector containing the original bytes of the target function.
     /// @return A vector of the original bytes of the target function.
-    [[nodiscard]] const auto& original_bytes() const { return m_hook.m_original_bytes; }
+    [[nodiscard]] const auto& original_bytes() const noexcept { return m_hook.m_original_bytes; }
 
     /// @brief Tests if the hook is valid.
     /// @return true if the hook is valid, false otherwise.
-    explicit operator bool() const { return static_cast<bool>(m_stub); }
+    explicit operator bool() const noexcept { return static_cast<bool>(m_stub); }
 
     /// @brief Enable the hook.
     [[nodiscard]] std::expected<void, Error> enable();
@@ -144,7 +143,7 @@ public:
     [[nodiscard]] std::expected<void, Error> disable();
 
     /// @brief Check if the hook is enabled.
-    [[nodiscard]] bool enabled() const { return m_hook.enabled(); }
+    [[nodiscard]] bool enabled() const noexcept { return m_hook.enabled(); }
 
 private:
     InlineHook m_hook{};

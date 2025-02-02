@@ -11,7 +11,7 @@ static suite<"mid hook"> mid_hook_tests = [] {
 
         expect(Target::add_42(0) == 42_i);
 
-        static SafetyHookMid hook;
+        static SafetyHookMid hook{};
 
         struct Hook {
             static void add_42(SafetyHookContext& ctx) {
@@ -52,7 +52,7 @@ static suite<"mid hook"> mid_hook_tests = [] {
 
         expect(Target::add_42(0.0f) == 0.42_f);
 
-        static SafetyHookMid hook;
+        static SafetyHookMid hook{};
 
         struct Hook {
             static void add_42(SafetyHookContext& ctx) { ctx.xmm0.f32[0] = 1337.0f - 0.42f; }
@@ -84,7 +84,7 @@ static suite<"mid hook"> mid_hook_tests = [] {
         expect(Target::add_42(1) == 43_i);
         expect(Target::add_42(2) == 44_i);
 
-        static SafetyHookMid hook;
+        static SafetyHookMid hook{};
 
         struct Hook {
             static void add_42(SafetyHookContext& ctx) {

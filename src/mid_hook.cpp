@@ -8,7 +8,6 @@
 #include "safetyhook/mid_hook.hpp"
 
 namespace safetyhook {
-
 #if SAFETYHOOK_ARCH_X86_64
 #if SAFETYHOOK_OS_WINDOWS
 constexpr std::array<uint8_t, 391> asm_data = {0xFF, 0x35, 0x79, 0x01, 0x00, 0x00, 0x54, 0x54, 0x55, 0x50, 0x53, 0x51,
@@ -76,8 +75,7 @@ std::expected<MidHook, MidHook::Error> MidHook::create(
     const std::shared_ptr<Allocator>& allocator, void* target, MidHookFn destination, Flags flags) {
     MidHook hook{};
 
-    if (const auto setup_result = hook.setup(allocator, reinterpret_cast<uint8_t*>(target), destination);
-        !setup_result) {
+    if (auto setup_result = hook.setup(allocator, static_cast<uint8_t*>(target), destination); !setup_result) {
         return std::unexpected{setup_result.error()};
     }
 
@@ -101,7 +99,7 @@ MidHook& MidHook::operator=(MidHook&& other) noexcept {
         m_stub = std::move(other.m_stub);
         m_destination = other.m_destination;
 
-        other.m_target = 0;
+        other.m_target = nullptr;
         other.m_destination = nullptr;
     }
 

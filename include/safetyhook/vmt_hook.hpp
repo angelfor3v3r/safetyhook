@@ -30,7 +30,7 @@ public:
     void reset();
 
     /// @brief Gets the original method pointer.
-    template <typename T> [[nodiscard]] T original() const { return reinterpret_cast<T>(m_original_vm); }
+    template <typename T> [[nodiscard]] T original() const noexcept { return reinterpret_cast<T>(m_original_vm); }
 
     /// @brief Calls the original method.
     /// @tparam RetT The return type of the method.
@@ -109,7 +109,7 @@ public:
         /// @brief Create a BAD_ALLOCATION error.
         /// @param err The Allocator::Error that failed.
         /// @return The new BAD_ALLOCATION error.
-        [[nodiscard]] static Error bad_allocation(Allocator::Error err) {
+        [[nodiscard]] static Error bad_allocation(Allocator::Error err) noexcept {
             return {.type = BAD_ALLOCATION, .allocator_error = err};
         }
     };
@@ -141,7 +141,8 @@ public:
     /// @brief Hooks a method in the VMT.
     /// @param index The index of the method to hook.
     /// @param new_function The new function to use.
-    template <typename T> [[nodiscard]] std::expected<VmHook, Error> hook_method(size_t index, T new_function) {
+    template <typename T>
+    [[nodiscard]] std::expected<VmHook, Error> hook_method(size_t index, T new_function) noexcept {
         VmHook hook{};
 
         ++index; // Skip RTTI pointer.

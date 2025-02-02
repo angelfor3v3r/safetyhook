@@ -20,7 +20,7 @@ static suite<"vmt hook"> vmt_hook_tests = [] {
             SAFETYHOOK_NOINLINE int add_42(int a) override { return a + 42; }
         };
 
-        std::unique_ptr<Interface> target = std::make_unique<Target>();
+        auto target = std::make_unique<Target>();
 
         expect(target->add_42(0) == 42_i);
 
@@ -62,7 +62,7 @@ static suite<"vmt hook"> vmt_hook_tests = [] {
             SAFETYHOOK_NOINLINE int add_43(int a) override { return a + 43; }
         };
 
-        std::unique_ptr<Interface> target = std::make_unique<Target>();
+        auto target = std::make_unique<Target>();
 
         expect(target->add_42(0) == 42_i);
         expect(target->add_43(0) == 43_i);
@@ -152,7 +152,7 @@ static suite<"vmt hook"> vmt_hook_tests = [] {
             SAFETYHOOK_NOINLINE int add_42(int a) override { return a + 42; }
         };
 
-        std::unique_ptr<Interface> target = std::make_unique<Target>();
+        auto target = std::make_unique<Target>();
 
         expect(target->add_42(0) == 42_i);
 
@@ -191,10 +191,10 @@ static suite<"vmt hook"> vmt_hook_tests = [] {
             SAFETYHOOK_NOINLINE int add_42(int a) override { return a + 42; }
         };
 
-        std::unique_ptr<Interface> target = std::make_unique<Target>();
-        std::unique_ptr<Interface> target0 = std::make_unique<Target>();
-        std::unique_ptr<Interface> target1 = std::make_unique<Target>();
-        std::unique_ptr<Interface> target2 = std::make_unique<Target>();
+        auto target = std::make_unique<Target>();
+        auto target0 = std::make_unique<Target>();
+        auto target1 = std::make_unique<Target>();
+        auto target2 = std::make_unique<Target>();
 
         expect(target->add_42(0) == 42_i);
 
@@ -244,10 +244,10 @@ static suite<"vmt hook"> vmt_hook_tests = [] {
             SAFETYHOOK_NOINLINE int add_42(int a) override { return a + 42; }
         };
 
-        std::unique_ptr<Interface> target = std::make_unique<Target>();
-        std::unique_ptr<Interface> target0 = std::make_unique<Target>();
-        std::unique_ptr<Interface> target1 = std::make_unique<Target>();
-        std::unique_ptr<Interface> target2 = std::make_unique<Target>();
+        auto target = std::make_unique<Target>();
+        auto target0 = std::make_unique<Target>();
+        auto target1 = std::make_unique<Target>();
+        auto target2 = std::make_unique<Target>();
 
         expect(target->add_42(0) == 42_i);
 
@@ -318,7 +318,7 @@ static suite<"vmt hook"> vmt_hook_tests = [] {
             SAFETYHOOK_NOINLINE int add_42(int a) override { return a + 42; }
         };
 
-        std::unique_ptr<Interface> target = std::make_unique<Target>();
+        auto target = std::make_unique<Target>();
 
         expect(target->add_42(0) == 42_i);
 

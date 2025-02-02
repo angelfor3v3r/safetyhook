@@ -14,8 +14,8 @@ public:
     int add_42(int a) override { return a + 42; }
 };
 
-SafetyHookVmt g_target_hook;
-SafetyHookVm g_add_42_hook;
+SafetyHookVmt g_target_hook{};
+SafetyHookVm g_add_42_hook{};
 
 class Hook : public Target {
 public:

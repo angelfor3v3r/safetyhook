@@ -44,47 +44,51 @@ public:
         /// @brief Create a BAD_ALLOCATION error.
         /// @param err The Allocator::Error that failed.
         /// @return The new BAD_ALLOCATION error.
-        [[nodiscard]] static Error bad_allocation(Allocator::Error err) {
+        [[nodiscard]] static Error bad_allocation(Allocator::Error err) noexcept {
             return {.type = BAD_ALLOCATION, .allocator_error = err};
         }
 
         /// @brief Create a FAILED_TO_DECODE_INSTRUCTION error.
         /// @param ip The IP of the problematic instruction.
         /// @return The new FAILED_TO_DECODE_INSTRUCTION error.
-        [[nodiscard]] static Error failed_to_decode_instruction(uint8_t* ip) {
+        [[nodiscard]] static Error failed_to_decode_instruction(uint8_t* ip) noexcept {
             return {.type = FAILED_TO_DECODE_INSTRUCTION, .ip = ip};
         }
 
         /// @brief Create a SHORT_JUMP_IN_TRAMPOLINE error.
         /// @param ip The IP of the problematic instruction.
         /// @return The new SHORT_JUMP_IN_TRAMPOLINE error.
-        [[nodiscard]] static Error short_jump_in_trampoline(uint8_t* ip) {
+        [[nodiscard]] static Error short_jump_in_trampoline(uint8_t* ip) noexcept {
             return {.type = SHORT_JUMP_IN_TRAMPOLINE, .ip = ip};
         }
 
         /// @brief Create a IP_RELATIVE_INSTRUCTION_OUT_OF_RANGE error.
         /// @param ip The IP of the problematic instruction.
         /// @return The new IP_RELATIVE_INSTRUCTION_OUT_OF_RANGE error.
-        [[nodiscard]] static Error ip_relative_instruction_out_of_range(uint8_t* ip) {
+        [[nodiscard]] static Error ip_relative_instruction_out_of_range(uint8_t* ip) noexcept {
             return {.type = IP_RELATIVE_INSTRUCTION_OUT_OF_RANGE, .ip = ip};
         }
 
         /// @brief Create a UNSUPPORTED_INSTRUCTION_IN_TRAMPOLINE error.
         /// @param ip The IP of the problematic instruction.
         /// @return The new UNSUPPORTED_INSTRUCTION_IN_TRAMPOLINE error.
-        [[nodiscard]] static Error unsupported_instruction_in_trampoline(uint8_t* ip) {
+        [[nodiscard]] static Error unsupported_instruction_in_trampoline(uint8_t* ip) noexcept {
             return {.type = UNSUPPORTED_INSTRUCTION_IN_TRAMPOLINE, .ip = ip};
         }
 
         /// @brief Create a FAILED_TO_UNPROTECT error.
         /// @param ip The IP of the problematic instruction.
         /// @return The new FAILED_TO_UNPROTECT error.
-        [[nodiscard]] static Error failed_to_unprotect(uint8_t* ip) { return {.type = FAILED_TO_UNPROTECT, .ip = ip}; }
+        [[nodiscard]] static Error failed_to_unprotect(uint8_t* ip) noexcept {
+            return {.type = FAILED_TO_UNPROTECT, .ip = ip};
+        }
 
         /// @brief Create a NOT_ENOUGH_SPACE error.
         /// @param ip The IP of the problematic instruction.
         /// @return The new NOT_ENOUGH_SPACE error.
-        [[nodiscard]] static Error not_enough_space(uint8_t* ip) { return {.type = NOT_ENOUGH_SPACE, .ip = ip}; }
+        [[nodiscard]] static Error not_enough_space(uint8_t* ip) noexcept {
+            return {.type = NOT_ENOUGH_SPACE, .ip = ip};
+        }
     };
 
     /// @brief Flags for InlineHook.
@@ -152,36 +156,38 @@ public:
 
     /// @brief Get a pointer to the target.
     /// @return A pointer to the target.
-    [[nodiscard]] uint8_t* target() const { return m_target; }
+    [[nodiscard]] uint8_t* target() const noexcept { return m_target; }
 
     /// @brief Get the target address.
     /// @return The target address.
-    [[nodiscard]] uintptr_t target_address() const { return reinterpret_cast<uintptr_t>(m_target); }
+    [[nodiscard]] uintptr_t target_address() const noexcept { return reinterpret_cast<uintptr_t>(m_target); }
 
     /// @brief Get a pointer ot the destination.
     /// @return A pointer to the destination.
-    [[nodiscard]] uint8_t* destination() const { return m_destination; }
+    [[nodiscard]] uint8_t* destination() const noexcept { return m_destination; }
 
     /// @brief Get the destination address.
     /// @return The destination address.
-    [[nodiscard]] uintptr_t destination_address() const { return reinterpret_cast<uintptr_t>(m_destination); }
+    [[nodiscard]] uintptr_t destination_address() const noexcept { return reinterpret_cast<uintptr_t>(m_destination); }
 
     /// @brief Get the trampoline Allocation.
     /// @return The trampoline Allocation.
-    [[nodiscard]] const Allocation& trampoline() const { return m_trampoline; }
+    [[nodiscard]] const Allocation& trampoline() const noexcept { return m_trampoline; }
 
     /// @brief Tests if the hook is valid.
     /// @return True if the hook is valid, false otherwise.
-    explicit operator bool() const { return static_cast<bool>(m_trampoline); }
+    explicit operator bool() const noexcept { return static_cast<bool>(m_trampoline); }
 
     /// @brief Returns the address of the trampoline to call the original function.
     /// @tparam T The type of the function pointer.
     /// @return The address of the trampoline to call the original function.
-    template <typename T> [[nodiscard]] T original() const { return reinterpret_cast<T>(m_trampoline.address()); }
+    template <typename T> [[nodiscard]] T original() const noexcept {
+        return reinterpret_cast<T>(m_trampoline.address());
+    }
 
     /// @brief Returns a vector containing the original bytes of the target function.
     /// @return A vector of the original bytes of the target function.
-    [[nodiscard]] const auto& original_bytes() const { return m_original_bytes; }
+    [[nodiscard]] const auto& original_bytes() const noexcept { return m_original_bytes; }
 
     /// @brief Calls the original function.
     /// @tparam RetT The return type of the function.
@@ -305,7 +311,7 @@ public:
     [[nodiscard]] std::expected<void, Error> disable();
 
     /// @brief Check if the hook is enabled.
-    [[nodiscard]] bool enabled() const { return m_enabled; }
+    [[nodiscard]] bool enabled() const noexcept { return m_enabled; }
 
 private:
     friend class MidHook;

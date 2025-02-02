@@ -90,18 +90,18 @@ std::expected<Allocation, Allocator::Error> Allocator::internal_allocate_near(
 
     // First search through our list of allocations for a free block that is large
     // enough.
-    for (const auto& allocation : m_memory) {
+    for (auto& allocation : m_memory) {
         if (allocation->size < aligned_size) {
             continue;
         }
 
-        for (auto node = allocation->freelist.get(); node != nullptr; node = node->next.get()) {
+        for (auto* node = allocation->freelist.get(); node != nullptr; node = node->next.get()) {
             // Enough room?
             if (static_cast<size_t>(node->end - node->start) < aligned_size) {
                 continue;
             }
 
-            const auto address = node->start;
+            auto* address = node->start;
 
             // Close enough?
             if (!in_range(address, desired_addresses, max_distance)) {
@@ -137,7 +137,7 @@ void Allocator::internal_free(uint8_t* address, size_t size) {
     // See internal_allocate_near
     size = align_up(size, 2);
 
-    for (const auto& allocation : m_memory) {
+    for (auto& allocation : m_memory) {
         if (allocation->address > address || allocation->address + allocation->size < address) {
             continue;
         }
@@ -145,7 +145,7 @@ void Allocator::internal_free(uint8_t* address, size_t size) {
         // Find the right place for our new freenode.
         FreeNode* prev{};
 
-        for (auto node = allocation->freelist.get(); node != nullptr; prev = node, node = node->next.get()) {
+        for (auto* node = allocation->freelist.get(); node != nullptr; prev = node, node = node->next.get()) {
             if (node->start > address) {
                 break;
             }
@@ -171,7 +171,7 @@ void Allocator::internal_free(uint8_t* address, size_t size) {
 }
 
 void Allocator::combine_adjacent_freenodes(Memory& memory) {
-    for (auto prev = memory.freelist.get(), node = prev; node != nullptr; node = node->next.get()) {
+    for (auto *prev = memory.freelist.get(), *node = prev; node != nullptr; node = node->next.get()) {
         if (prev->end == node->start) {
             prev->end = node->end;
             prev->next.swap(node->next);
@@ -206,9 +206,9 @@ std::expected<uint8_t*, Allocator::Error> Allocator::allocate_nearby_memory(
     };
 
     auto si = system_info();
-    auto desired_address = desired_addresses[0];
-    auto search_start = si.min_address;
-    auto search_end = si.max_address;
+    auto* desired_address = desired_addresses[0];
+    auto* search_start = si.min_address;
+    auto* search_end = si.max_address;
 
     if (static_cast<size_t>(desired_address - search_start) > max_distance) {
         search_start = desired_address - max_distance;
@@ -224,7 +224,7 @@ std::expected<uint8_t*, Allocator::Error> Allocator::allocate_nearby_memory(
     VmBasicInfo mbi{};
 
     // Search backwards from the desired_address.
-    for (auto p = desired_address; p > search_start && in_range(p, desired_addresses, max_distance);
+    for (auto* p = desired_address; p > search_start && in_range(p, desired_addresses, max_distance);
          p = align_down(mbi.address - 1, si.allocation_granularity)) {
         auto result = vm_query(p);
 
@@ -238,13 +238,13 @@ std::expected<uint8_t*, Allocator::Error> Allocator::allocate_nearby_memory(
             continue;
         }
 
-        if (auto allocation_address = attempt_allocation(p); allocation_address != nullptr) {
+        if (auto* allocation_address = attempt_allocation(p); allocation_address != nullptr) {
             return allocation_address;
         }
     }
 
     // Search forwards from the desired_address.
-    for (auto p = desired_address; p < search_end && in_range(p, desired_addresses, max_distance); p += mbi.size) {
+    for (auto* p = desired_address; p < search_end && in_range(p, desired_addresses, max_distance); p += mbi.size) {
         auto result = vm_query(p);
 
         if (!result) {
@@ -266,7 +266,7 @@ std::expected<uint8_t*, Allocator::Error> Allocator::allocate_nearby_memory(
 }
 
 bool Allocator::in_range(uint8_t* address, const std::vector<uint8_t*>& desired_addresses, size_t max_distance) {
-    return std::ranges::all_of(desired_addresses, [&](const auto& desired_address) {
+    return std::all_of(desired_addresses.begin(), desired_addresses.end(), [&](const auto& desired_address) {
         const size_t delta = (address > desired_address) ? address - desired_address : desired_address - address;
         return delta <= max_distance;
     });

@@ -17,7 +17,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         expect(eq(Target::fn("world"), "hello world"sv));
 
         // First hook.
-        static SafetyHookInline hook0;
+        static SafetyHookInline hook0{};
 
         struct Hook0 {
             static std::string fn(std::string name) { return hook0.call<std::string>(name + " and bob"); }
@@ -32,7 +32,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         expect(eq(Target::fn("world"), "hello world and bob"sv));
 
         // Second hook.
-        static SafetyHookInline hook1;
+        static SafetyHookInline hook1{};
 
         struct Hook1 {
             static std::string fn(std::string name) { return hook1.call<std::string>(name + " and alice"); }
@@ -47,7 +47,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         expect(eq(Target::fn("world"), "hello world and alice and bob"sv));
 
         // Third hook.
-        static SafetyHookInline hook2;
+        static SafetyHookInline hook2{};
 
         struct Hook2 {
             static std::string fn(std::string name) { return hook2.call<std::string>(name + " and eve"); }
@@ -62,7 +62,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         expect(eq(Target::fn("world"), "hello world and eve and alice and bob"sv));
 
         // Fourth hook.
-        static SafetyHookInline hook3;
+        static SafetyHookInline hook3{};
 
         struct Hook3 {
             static std::string fn(std::string name) { return hook3.call<std::string>(name + " and carol"); }
@@ -90,7 +90,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
 
         expect(Target::add(2, 3) == 5_i);
 
-        static SafetyHookInline add_hook;
+        static SafetyHookInline add_hook{};
 
         struct AddHook {
             static int add(int x, int y) { return add_hook.call<int>(x * 2, y * 2); }
@@ -111,7 +111,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
 
 #if SAFETYHOOK_OS_WINDOWS
     "Active function is hooked and unhooked"_test = [] {
-        static int count = 0;
+        static int count{};
         static bool is_running = true;
 
         struct Target {
@@ -128,7 +128,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
 
         std::this_thread::sleep_for(1s);
 
-        static SafetyHookInline hook;
+        static SafetyHookInline hook{};
 
         struct Hook {
             static std::string say_hello(int times [[maybe_unused]]) { return hook.call<std::string>(1337); }
@@ -171,7 +171,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         cg.ret();
         cg.nop(10, false);
 
-        const auto fn = cg.getCode<int(SAFETYHOOK_FASTCALL*)()>();
+        auto* fn = cg.getCode<int(SAFETYHOOK_FASTCALL*)()>();
 
         expect(fn() == 1_i);
 
@@ -193,7 +193,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
 
         Xbyak::CodeGenerator cg{};
         Xbyak::Label label{};
-        const auto finalize = [&cg, &label] {
+        auto finalize = [&cg, &label] {
             cg.mov(eax, 0);
             cg.ret();
             cg.nop(10, false);
@@ -213,7 +213,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JB"_test = [&] {
             cg.cmp(param, 8);
             cg.jb(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 1_i);
             expect(fn(8) == 0_i);
@@ -237,7 +237,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JBE"_test = [&] {
             cg.cmp(param, 8);
             cg.jbe(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 1_i);
             expect(fn(8) == 1_i);
@@ -261,7 +261,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JL"_test = [&] {
             cg.cmp(param, 8);
             cg.jl(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 1_i);
             expect(fn(8) == 0_i);
@@ -285,7 +285,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JLE"_test = [&] {
             cg.cmp(param, 8);
             cg.jle(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 1_i);
             expect(fn(8) == 1_i);
@@ -309,7 +309,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JNB"_test = [&] {
             cg.cmp(param, 8);
             cg.jnb(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 0_i);
             expect(fn(8) == 1_i);
@@ -333,7 +333,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JNBE"_test = [&] {
             cg.cmp(param, 8);
             cg.jnbe(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 0_i);
             expect(fn(8) == 0_i);
@@ -357,7 +357,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JNL"_test = [&] {
             cg.cmp(param, 8);
             cg.jnl(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 0_i);
             expect(fn(8) == 1_i);
@@ -381,7 +381,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JNLE"_test = [&] {
             cg.cmp(param, 8);
             cg.jnle(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 0_i);
             expect(fn(8) == 0_i);
@@ -405,7 +405,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JNO"_test = [&] {
             cg.cmp(param, 8);
             cg.jno(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 1_i);
             expect(fn(8) == 1_i);
@@ -429,7 +429,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JNP"_test = [&] {
             cg.cmp(param, 8);
             cg.jnp(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 0_i);
             expect(fn(8) == 0_i);
@@ -453,7 +453,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JNS"_test = [&] {
             cg.cmp(param, 8);
             cg.jns(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 0_i);
             expect(fn(8) == 1_i);
@@ -477,7 +477,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JNZ"_test = [&] {
             cg.cmp(param, 8);
             cg.jnz(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 1_i);
             expect(fn(8) == 0_i);
@@ -501,7 +501,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JO"_test = [&] {
             cg.cmp(param, 8);
             cg.jo(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 0_i);
             expect(fn(8) == 0_i);
@@ -525,7 +525,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JP"_test = [&] {
             cg.cmp(param, 8);
             cg.jp(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 1_i);
             expect(fn(8) == 1_i);
@@ -549,7 +549,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JS"_test = [&] {
             cg.cmp(param, 8);
             cg.js(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 1_i);
             expect(fn(8) == 0_i);
@@ -573,7 +573,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         "JZ"_test = [&] {
             cg.cmp(param, 8);
             cg.jz(label);
-            const auto fn = finalize();
+            auto* fn = finalize();
 
             expect(fn(7) == 0_i);
             expect(fn(8) == 1_i);
@@ -605,7 +605,7 @@ static suite<"inline hook"> inline_hook_tests = [] {
         cg.ret();
         cg.nop(10, false);
 
-        const auto fn = cg.getCode<int (*)()>();
+        auto* fn = cg.getCode<int (*)()>();
 
         expect(fn() == 42_i);
 

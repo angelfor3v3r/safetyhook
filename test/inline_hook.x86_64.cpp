@@ -31,11 +31,11 @@ static suite<"inline hook (x64)"> inline_hook_x64_tests = [] {
         cg.L(str_label);
         asciiz(cg, "Hello");
 
-        const auto fn = cg.getCode<const char* (*)()>();
+        auto* fn = cg.getCode<const char* (*)()>();
 
         expect(eq(fn(), "Hello"sv));
 
-        static SafetyHookInline hook;
+        static SafetyHookInline hook{};
 
         struct Hook {
             static const char* fn() { return "Hello, world!"; }
@@ -71,7 +71,7 @@ static suite<"inline hook (x64)"> inline_hook_x64_tests = [] {
         cg.imul(eax, dword[rsp + 8]);
         cg.ret();
 
-        auto fn = reinterpret_cast<int (*)(int)>(const_cast<uint8_t*>(start.getAddress()));
+        auto* fn = reinterpret_cast<int (*)(int)>(const_cast<uint8_t*>(start.getAddress()));
 
         expect(fn(2) == 4_i);
         expect(fn(3) == 9_i);

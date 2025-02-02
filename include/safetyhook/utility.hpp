@@ -10,11 +10,11 @@ import std.compat;
 #endif
 
 namespace safetyhook {
-template <typename T> constexpr void store(uint8_t* address, const T& value) {
+template <typename T> constexpr void store(uint8_t* address, const T& value) noexcept {
     std::copy_n(reinterpret_cast<const uint8_t*>(&value), sizeof(T), address);
 }
 
-template <typename T, typename U> constexpr T address_cast(U address) {
+template <typename T, typename U> constexpr T address_cast(U address) noexcept {
     if constexpr (std::is_integral_v<T> && std::is_integral_v<U>) {
         return static_cast<T>(address);
     } else {
@@ -46,15 +46,15 @@ private:
 
 [[nodiscard]] std::optional<UnprotectMemory> unprotect(uint8_t* address, size_t size);
 
-template <typename T> constexpr T align_up(T address, size_t align) {
-    const auto unaligned_address = address_cast<uintptr_t>(address);
-    const auto aligned_address = (unaligned_address + align - 1) & ~(align - 1);
+template <typename T> constexpr T align_up(T address, size_t align) noexcept {
+    auto unaligned_address = address_cast<uintptr_t>(address);
+    auto aligned_address = (unaligned_address + align - 1) & ~(align - 1);
     return address_cast<T>(aligned_address);
 }
 
-template <typename T> constexpr T align_down(T address, size_t align) {
-    const auto unaligned_address = address_cast<uintptr_t>(address);
-    const auto aligned_address = unaligned_address & ~(align - 1);
+template <typename T> constexpr T align_down(T address, size_t align) noexcept {
+    auto unaligned_address = address_cast<uintptr_t>(address);
+    auto aligned_address = unaligned_address & ~(align - 1);
     return address_cast<T>(aligned_address);
 }
 } // namespace safetyhook

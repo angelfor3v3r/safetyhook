@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -16,11 +17,13 @@
 #error "Windows.h not found"
 #endif
 
+#include <ShlObj.h>
+
 #include "safetyhook/os.hpp"
 
 namespace safetyhook {
 std::expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAccess access) {
-    DWORD protect = 0;
+    DWORD protect;
 
     if (access == VM_ACCESS_R) {
         protect = PAGE_READONLY;
@@ -48,7 +51,7 @@ void vm_free(uint8_t* address) {
 }
 
 std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAccess access) {
-    DWORD protect = 0;
+    DWORD protect;
 
     if (access == VM_ACCESS_R) {
         protect = PAGE_READONLY;
@@ -66,7 +69,7 @@ std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAcc
 }
 
 std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, uint32_t protect) {
-    DWORD old_protect = 0;
+    DWORD old_protect;
 
     if (VirtualProtect(address, size, protect, &old_protect) == FALSE) {
         return std::unexpected{OsError::FAILED_TO_PROTECT};
@@ -76,7 +79,7 @@ std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, uint3
 }
 
 std::expected<VmBasicInfo, OsError> vm_query(uint8_t* address) {
-    MEMORY_BASIC_INFORMATION mbi{};
+    MEMORY_BASIC_INFORMATION mbi;
     auto result = VirtualQuery(address, &mbi, sizeof(mbi));
 
     if (result == 0) {
@@ -113,22 +116,22 @@ bool vm_is_executable(uint8_t* address) {
     }
 
     // Just check if the section is executable.
-    const auto* image_base = reinterpret_cast<uint8_t*>(image_base_ptr);
-    const auto* dos_hdr = reinterpret_cast<const IMAGE_DOS_HEADER*>(image_base);
+    auto* image_base = static_cast<uint8_t*>(image_base_ptr);
+    auto* dos_hdr = reinterpret_cast<IMAGE_DOS_HEADER*>(image_base);
 
     if (dos_hdr->e_magic != IMAGE_DOS_SIGNATURE) {
         return vm_query(address).value_or(VmBasicInfo{}).access.execute;
     }
 
-    const auto* nt_hdr = reinterpret_cast<const IMAGE_NT_HEADERS*>(image_base + dos_hdr->e_lfanew);
+    auto* nt_hdr = reinterpret_cast<IMAGE_NT_HEADERS*>(image_base + dos_hdr->e_lfanew);
 
     if (nt_hdr->Signature != IMAGE_NT_SIGNATURE) {
         return vm_query(address).value_or(VmBasicInfo{}).access.execute;
     }
 
-    const auto* section = IMAGE_FIRST_SECTION(nt_hdr);
+    auto* section = IMAGE_FIRST_SECTION(nt_hdr);
 
-    for (auto i = 0; i < nt_hdr->FileHeader.NumberOfSections; ++i, ++section) {
+    for (uint16_t i = 0; i < nt_hdr->FileHeader.NumberOfSections; ++i, ++section) {
         if (address >= image_base + section->VirtualAddress &&
             address < image_base + section->VirtualAddress + section->Misc.VirtualSize) {
             return (section->Characteristics & IMAGE_SCN_MEM_EXECUTE) != 0;
@@ -139,27 +142,29 @@ bool vm_is_executable(uint8_t* address) {
 }
 
 SystemInfo system_info() {
-    SystemInfo info{};
+    static auto result = []() -> SystemInfo {
+        SYSTEM_INFO si;
+        GetSystemInfo(&si);
 
-    SYSTEM_INFO si{};
-    GetSystemInfo(&si);
+        return {
+            .page_size = si.dwPageSize,
+            .allocation_granularity = si.dwAllocationGranularity,
+            .min_address = static_cast<uint8_t*>(si.lpMinimumApplicationAddress),
+            .max_address = static_cast<uint8_t*>(si.lpMaximumApplicationAddress),
+        };
+    }();
 
-    info.page_size = si.dwPageSize;
-    info.allocation_granularity = si.dwAllocationGranularity;
-    info.min_address = static_cast<uint8_t*>(si.lpMinimumApplicationAddress);
-    info.max_address = static_cast<uint8_t*>(si.lpMaximumApplicationAddress);
-
-    return info;
+    return result;
 }
 
 struct TrapInfo {
-    uint8_t* from_page_start;
-    uint8_t* from_page_end;
-    uint8_t* from;
-    uint8_t* to_page_start;
-    uint8_t* to_page_end;
-    uint8_t* to;
-    size_t len;
+    uint8_t* from_page_start{};
+    uint8_t* from_page_end{};
+    uint8_t* from{};
+    uint8_t* to_page_start{};
+    uint8_t* to_page_end{};
+    uint8_t* to{};
+    size_t len{};
 };
 
 class TrapManager final {
@@ -217,13 +222,13 @@ public:
     }
 
 private:
-    std::map<uint8_t*, TrapInfo> m_traps;
+    std::map<uint8_t*, TrapInfo> m_traps{};
     PVOID m_trap_veh{};
 
     static LONG CALLBACK trap_handler(PEXCEPTION_POINTERS exp) {
-        auto exception_code = exp->ExceptionRecord->ExceptionCode;
+        auto code = exp->ExceptionRecord->ExceptionCode;
 
-        if (exception_code != EXCEPTION_ACCESS_VIOLATION) {
+        if (code != EXCEPTION_ACCESS_VIOLATION) {
             return EXCEPTION_CONTINUE_SEARCH;
         }
 
@@ -241,7 +246,7 @@ private:
 
         auto* ctx = exp->ContextRecord;
 
-        for (size_t i = 0; i < trap->len; i++) {
+        for (size_t i = 0; i < trap->len; ++i) {
             fix_ip(ctx, trap->from + i, trap->to + i);
         }
 
@@ -249,13 +254,83 @@ private:
     }
 };
 
-std::mutex TrapManager::mutex;
-std::unique_ptr<TrapManager> TrapManager::instance;
+std::mutex TrapManager::mutex{};
+std::unique_ptr<TrapManager> TrapManager::instance{};
+
+using NtProtectVirtualMemory_fn = NTSTATUS(NTAPI*)(HANDLE ProcessHandle, PVOID* BaseAddress,
+    PSIZE_T NumberOfBytesToProtect, DWORD NewAccessProtection, PDWORD OldAccessProtection);
+
+NtProtectVirtualMemory_fn g_NtProtectVirtualMemory{};
+
+bool init_ntdll_copy() {
+    PWSTR str;
+
+#ifdef SAFETYHOOK_ARCH_X86_64
+    auto id = FOLDERID_System;
+#elif SAFETYHOOK_ARCH_X86_32
+    auto id = FOLDERID_SystemX86;
+#endif
+
+    if (SHGetKnownFolderPath(id, 0, nullptr, &str) != S_OK) {
+        return false;
+    }
+
+    std::wstring sys32_dir{str};
+    CoTaskMemFree(str);
+
+    std::error_code ec{};
+    auto temp_path = std::filesystem::temp_directory_path(ec);
+
+    if (temp_path.empty()) {
+        return false;
+    }
+
+    auto temp_ntdll_path = temp_path / "ntdll_safetyhook.dll";
+
+    if (!std::filesystem::copy_file(std::filesystem::path(sys32_dir) / "ntdll.dll", temp_ntdll_path,
+            std::filesystem::copy_options::overwrite_existing, ec)) {
+        return false;
+    }
+
+    auto temp_ntdll = LoadLibraryW(temp_ntdll_path.c_str());
+
+    if (temp_ntdll == nullptr) {
+        return false;
+    }
+
+    g_NtProtectVirtualMemory =
+        reinterpret_cast<NtProtectVirtualMemory_fn>(GetProcAddress(temp_ntdll, "NtProtectVirtualMemory"));
+
+    if (g_NtProtectVirtualMemory == nullptr) {
+        return false;
+    }
+
+    return true;
+}
+
+uint32_t nt_vm_protect(uint8_t* address, size_t size, uint32_t protect) {
+    auto* base = static_cast<PVOID>(address);
+    auto region_size = static_cast<SIZE_T>(size);
+
+    DWORD old_protect;
+
+    g_NtProtectVirtualMemory(reinterpret_cast<HANDLE>(-1LL), &base, &region_size, protect, &old_protect);
+
+    return old_protect;
+}
 
 void find_me() {
 }
 
 void trap_threads(uint8_t* from, uint8_t* to, size_t len, const std::function<void()>& run_fn) {
+    if (static bool once{}; !once) {
+        once = init_ntdll_copy();
+
+        if (!once) {
+            return;
+        }
+    }
+
     MEMORY_BASIC_INFORMATION find_me_mbi{};
     MEMORY_BASIC_INFORMATION from_mbi{};
     MEMORY_BASIC_INFORMATION to_mbi{};
@@ -278,22 +353,19 @@ void trap_threads(uint8_t* from, uint8_t* to, size_t len, const std::function<vo
 
     TrapManager::instance->add_trap(from, to, len);
 
-    DWORD from_protect;
-    DWORD to_protect;
-
-    VirtualProtect(from, len, new_protect, &from_protect);
-    VirtualProtect(to, len, new_protect, &to_protect);
+    auto from_protect = nt_vm_protect(from, len, new_protect);
+    auto to_protect = nt_vm_protect(to, len, new_protect);
 
     if (run_fn) {
         run_fn();
     }
 
-    VirtualProtect(to, len, to_protect, &to_protect);
-    VirtualProtect(from, len, from_protect, &from_protect);
+    nt_vm_protect(to, len, to_protect);
+    nt_vm_protect(from, len, from_protect);
 }
 
 void fix_ip(ThreadContext thread_ctx, uint8_t* old_ip, uint8_t* new_ip) {
-    auto* ctx = reinterpret_cast<CONTEXT*>(thread_ctx);
+    auto* ctx = static_cast<CONTEXT*>(thread_ctx);
 
 #if SAFETYHOOK_ARCH_X86_64
     auto ip = ctx->Rip;
