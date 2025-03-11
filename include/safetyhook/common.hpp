@@ -88,3 +88,13 @@
 #else
 #define SAFETYHOOK_API
 #endif
+
+#if defined(SAFETYHOOK_USE_EXPECTED)
+#include <tl/expected.hpp>
+template <class T, class E> using Expected = tl::expected<T, E>;
+template <class E> using Unexpected = tl::unexpected<E>;
+#else
+#include <expected>
+template <class T, class E> using Expected = std::expected<T, E>;
+template <class E> using Unexpected = std::unexpected<E>;
+#endif

@@ -4,8 +4,8 @@
 #pragma once
 
 #ifndef SAFETYHOOK_USE_CXXMODULES
+#include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <unordered_map>
 #else
 import std.compat;
@@ -120,7 +120,7 @@ public:
     /// @brief Creates a new VmtHook object. Will clone the VMT of the given object and replace it.
     /// @param object The object to hook.
     /// @return The VmtHook object or a VmtHook::Error if an error occurred.
-    [[nodiscard]] static std::expected<VmtHook, Error> create(void* object);
+    [[nodiscard]] static Expected<VmtHook, Error> create(void* object);
 
     VmtHook() = default;
     VmtHook(const VmtHook&) = delete;
@@ -144,7 +144,7 @@ public:
     /// @brief Hooks a method in the VMT.
     /// @param index The index of the method to hook.
     /// @param new_function The new function to use.
-    template <typename T> [[nodiscard]] std::expected<VmHook, Error> hook_method(size_t index, T new_function) {
+    template <typename T> [[nodiscard]] Expected<VmHook, Error> hook_method(size_t index, T new_function) {
         VmHook hook{};
 
         ++index; // Skip RTTI pointer.

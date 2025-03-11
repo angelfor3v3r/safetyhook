@@ -5,7 +5,7 @@
 
 #ifndef SAFETYHOOK_USE_CXXMODULES
 #include <cstdint>
-#include <expected>
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -85,14 +85,14 @@ public:
     /// @brief Allocates memory.
     /// @param size The size of the allocation.
     /// @return The Allocation or an Allocator::Error if the allocation failed.
-    [[nodiscard]] std::expected<Allocation, Error> allocate(size_t size);
+    [[nodiscard]] Expected<Allocation, Error> allocate(size_t size);
 
     /// @brief Allocates memory near a target address.
     /// @param desired_addresses The target address.
     /// @param size The size of the allocation.
     /// @param max_distance The maximum distance from the target address.
     /// @return The Allocation or an Allocator::Error if the allocation failed.
-    [[nodiscard]] std::expected<Allocation, Error> allocate_near(
+    [[nodiscard]] Expected<Allocation, Error> allocate_near(
         const std::vector<uint8_t*>& desired_addresses, size_t size, size_t max_distance = 0x7FFF'FFFF);
 
 protected:
@@ -120,12 +120,12 @@ private:
 
     Allocator() = default;
 
-    [[nodiscard]] std::expected<Allocation, Error> internal_allocate_near(
+    [[nodiscard]] Expected<Allocation, Error> internal_allocate_near(
         const std::vector<uint8_t*>& desired_addresses, size_t size, size_t max_distance = 0x7FFF'FFFF);
     void internal_free(uint8_t* address, size_t size);
 
     static void combine_adjacent_freenodes(Memory& memory);
-    [[nodiscard]] static std::expected<uint8_t*, Error> allocate_nearby_memory(
+    [[nodiscard]] static Expected<uint8_t*, Error> allocate_nearby_memory(
         const std::vector<uint8_t*>& desired_addresses, size_t size, size_t max_distance);
     [[nodiscard]] static bool in_range(
         uint8_t* address, const std::vector<uint8_t*>& desired_addresses, size_t max_distance);

@@ -19,7 +19,7 @@
 #include "safetyhook/os.hpp"
 
 namespace safetyhook {
-std::expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAccess access) {
+Expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAccess access) {
     DWORD protect = 0;
 
     if (access == VM_ACCESS_R) {
@@ -31,13 +31,13 @@ std::expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAc
     } else if (access == VM_ACCESS_RWX) {
         protect = PAGE_EXECUTE_READWRITE;
     } else {
-        return std::unexpected{OsError::FAILED_TO_ALLOCATE};
+        return Unexpected{OsError::FAILED_TO_ALLOCATE};
     }
 
     auto* result = VirtualAlloc(address, size, MEM_COMMIT | MEM_RESERVE, protect);
 
     if (result == nullptr) {
-        return std::unexpected{OsError::FAILED_TO_ALLOCATE};
+        return Unexpected{OsError::FAILED_TO_ALLOCATE};
     }
 
     return static_cast<uint8_t*>(result);
@@ -47,7 +47,7 @@ void vm_free(uint8_t* address) {
     VirtualFree(address, 0, MEM_RELEASE);
 }
 
-std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAccess access) {
+Expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAccess access) {
     DWORD protect = 0;
 
     if (access == VM_ACCESS_R) {
@@ -59,28 +59,28 @@ std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAcc
     } else if (access == VM_ACCESS_RWX) {
         protect = PAGE_EXECUTE_READWRITE;
     } else {
-        return std::unexpected{OsError::FAILED_TO_PROTECT};
+        return Unexpected{OsError::FAILED_TO_PROTECT};
     }
 
     return vm_protect(address, size, protect);
 }
 
-std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, uint32_t protect) {
+Expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, uint32_t protect) {
     DWORD old_protect = 0;
 
     if (VirtualProtect(address, size, protect, &old_protect) == FALSE) {
-        return std::unexpected{OsError::FAILED_TO_PROTECT};
+        return Unexpected{OsError::FAILED_TO_PROTECT};
     }
 
     return old_protect;
 }
 
-std::expected<VmBasicInfo, OsError> vm_query(uint8_t* address) {
+Expected<VmBasicInfo, OsError> vm_query(uint8_t* address) {
     MEMORY_BASIC_INFORMATION mbi{};
     auto result = VirtualQuery(address, &mbi, sizeof(mbi));
 
     if (result == 0) {
-        return std::unexpected{OsError::FAILED_TO_QUERY};
+        return Unexpected{OsError::FAILED_TO_QUERY};
     }
 
     VmAccess access{};
@@ -113,20 +113,20 @@ bool vm_is_executable(uint8_t* address) {
     }
 
     // Just check if the section is executable.
-    const auto* image_base = reinterpret_cast<uint8_t*>(image_base_ptr);
-    const auto* dos_hdr = reinterpret_cast<const IMAGE_DOS_HEADER*>(image_base);
+    auto* image_base = static_cast<uint8_t*>(image_base_ptr);
+    auto* dos_hdr = reinterpret_cast<const IMAGE_DOS_HEADER*>(image_base);
 
     if (dos_hdr->e_magic != IMAGE_DOS_SIGNATURE) {
         return vm_query(address).value_or(VmBasicInfo{}).access.execute;
     }
 
-    const auto* nt_hdr = reinterpret_cast<const IMAGE_NT_HEADERS*>(image_base + dos_hdr->e_lfanew);
+    auto* nt_hdr = reinterpret_cast<const IMAGE_NT_HEADERS*>(image_base + dos_hdr->e_lfanew);
 
     if (nt_hdr->Signature != IMAGE_NT_SIGNATURE) {
         return vm_query(address).value_or(VmBasicInfo{}).access.execute;
     }
 
-    const auto* section = IMAGE_FIRST_SECTION(nt_hdr);
+    auto* section = IMAGE_FIRST_SECTION(nt_hdr);
 
     for (auto i = 0; i < nt_hdr->FileHeader.NumberOfSections; ++i, ++section) {
         if (address >= image_base + section->VirtualAddress &&
@@ -239,14 +239,14 @@ private:
         if (trap == nullptr) {
             if (instance->find_trap_page(faulting_address) != nullptr) {
                 return EXCEPTION_CONTINUE_EXECUTION;
-            } else {
-                return EXCEPTION_CONTINUE_SEARCH;
             }
+
+            return EXCEPTION_CONTINUE_SEARCH;
         }
 
         auto* ctx = exp->ContextRecord;
 
-        for (size_t i = 0; i < trap->len; i++) {
+        for (size_t i = 0; i < trap->len; ++i) {
             fix_ip(ctx, trap->from + i, trap->to + i);
         }
 

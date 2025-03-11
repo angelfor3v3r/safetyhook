@@ -2,8 +2,8 @@
 #pragma once
 
 #ifndef SAFETYHOOK_USE_CXXMODULES
+#include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <functional>
 #else
 import std.compat;
@@ -47,11 +47,11 @@ struct VmBasicInfo {
     bool is_free;
 };
 
-std::expected<uint8_t*, OsError> SAFETYHOOK_API vm_allocate(uint8_t* address, size_t size, VmAccess access);
+Expected<uint8_t*, OsError> SAFETYHOOK_API vm_allocate(uint8_t* address, size_t size, VmAccess access);
 void SAFETYHOOK_API vm_free(uint8_t* address);
-std::expected<uint32_t, OsError> SAFETYHOOK_API vm_protect(uint8_t* address, size_t size, VmAccess access);
-std::expected<uint32_t, OsError> SAFETYHOOK_API vm_protect(uint8_t* address, size_t size, uint32_t access);
-std::expected<VmBasicInfo, OsError> SAFETYHOOK_API vm_query(uint8_t* address);
+Expected<uint32_t, OsError> SAFETYHOOK_API vm_protect(uint8_t* address, size_t size, VmAccess access);
+Expected<uint32_t, OsError> SAFETYHOOK_API vm_protect(uint8_t* address, size_t size, uint32_t access);
+Expected<VmBasicInfo, OsError> SAFETYHOOK_API vm_query(uint8_t* address);
 bool SAFETYHOOK_API vm_is_readable(uint8_t* address, size_t size);
 bool SAFETYHOOK_API vm_is_writable(uint8_t* address, size_t size);
 bool SAFETYHOOK_API vm_is_executable(uint8_t* address);

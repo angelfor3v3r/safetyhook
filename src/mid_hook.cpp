@@ -68,22 +68,22 @@ constexpr std::array<uint8_t, 171> asm_data = {0xFF, 0x35, 0xA7, 0x00, 0x00, 0x0
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 #endif
 
-std::expected<MidHook, MidHook::Error> MidHook::create(void* target, MidHookFn destination, Flags flags) {
+Expected<MidHook, MidHook::Error> MidHook::create(void* target, MidHookFn destination, Flags flags) {
     return create(Allocator::global(), target, destination, flags);
 }
 
-std::expected<MidHook, MidHook::Error> MidHook::create(
+Expected<MidHook, MidHook::Error> MidHook::create(
     const std::shared_ptr<Allocator>& allocator, void* target, MidHookFn destination, Flags flags) {
     MidHook hook{};
 
     if (const auto setup_result = hook.setup(allocator, reinterpret_cast<uint8_t*>(target), destination);
         !setup_result) {
-        return std::unexpected{setup_result.error()};
+        return Unexpected{setup_result.error()};
     }
 
     if (!(flags & StartDisabled)) {
         if (auto enable_result = hook.enable(); !enable_result) {
-            return std::unexpected{enable_result.error()};
+            return Unexpected{enable_result.error()};
         }
     }
 
@@ -101,7 +101,7 @@ MidHook& MidHook::operator=(MidHook&& other) noexcept {
         m_stub = std::move(other.m_stub);
         m_destination = other.m_destination;
 
-        other.m_target = 0;
+        other.m_target = nullptr;
         other.m_destination = nullptr;
     }
 
@@ -112,7 +112,7 @@ void MidHook::reset() {
     *this = {};
 }
 
-std::expected<void, MidHook::Error> MidHook::setup(
+Expected<void, MidHook::Error> MidHook::setup(
     const std::shared_ptr<Allocator>& allocator, uint8_t* target, MidHookFn destination_fn) {
     m_target = target;
     m_destination = destination_fn;
@@ -120,7 +120,7 @@ std::expected<void, MidHook::Error> MidHook::setup(
     auto stub_allocation = allocator->allocate(asm_data.size());
 
     if (!stub_allocation) {
-        return std::unexpected{Error::bad_allocation(stub_allocation.error())};
+        return Unexpected{Error::bad_allocation(stub_allocation.error())};
     }
 
     m_stub = std::move(*stub_allocation);
@@ -141,7 +141,7 @@ std::expected<void, MidHook::Error> MidHook::setup(
 
     if (!hook_result) {
         m_stub.free();
-        return std::unexpected{Error::bad_inline_hook(hook_result.error())};
+        return Unexpected{Error::bad_inline_hook(hook_result.error())};
     }
 
     m_hook = std::move(*hook_result);
@@ -155,17 +155,17 @@ std::expected<void, MidHook::Error> MidHook::setup(
     return {};
 }
 
-std::expected<void, MidHook::Error> MidHook::enable() {
+Expected<void, MidHook::Error> MidHook::enable() {
     if (auto enable_result = m_hook.enable(); !enable_result) {
-        return std::unexpected{Error::bad_inline_hook(enable_result.error())};
+        return Unexpected{Error::bad_inline_hook(enable_result.error())};
     }
 
     return {};
 }
 
-std::expected<void, MidHook::Error> MidHook::disable() {
+Expected<void, MidHook::Error> MidHook::disable() {
     if (auto disable_result = m_hook.disable(); !disable_result) {
-        return std::unexpected{Error::bad_inline_hook(disable_result.error())};
+        return Unexpected{Error::bad_inline_hook(disable_result.error())};
     }
 
     return {};

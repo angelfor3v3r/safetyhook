@@ -2,6 +2,7 @@
 
 #ifndef SAFETYHOOK_USE_CXXMODULES
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <type_traits>

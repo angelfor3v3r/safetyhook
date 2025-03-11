@@ -59,9 +59,9 @@ template <typename T>
 template <typename T> [[nodiscard]] VmHook create_vm(VmtHook& vmt, size_t index, T destination) {
     if (auto hook = vmt.hook_method(index, destination)) {
         return std::move(*hook);
-    } else {
-        return {};
     }
+
+    return {};
 }
 
 } // namespace safetyhook

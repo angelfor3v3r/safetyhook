@@ -4,8 +4,8 @@
 #pragma once
 
 #ifndef SAFETYHOOK_USE_CXXMODULES
+#include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <memory>
 #include <mutex>
 #include <utility>
@@ -125,8 +125,7 @@ public:
     /// @return The InlineHook or an InlineHook::Error if an error occurred.
     /// @note This will use the default global Allocator.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
-    [[nodiscard]] static std::expected<InlineHook, Error> create(
-        void* target, void* destination, Flags flags = Default);
+    [[nodiscard]] static Expected<InlineHook, Error> create(void* target, void* destination, Flags flags = Default);
 
     /// @brief Create an inline hook.
     /// @param target The address of the function to hook.
@@ -136,7 +135,7 @@ public:
     /// @note This will use the default global Allocator.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
     template <typename T, typename U>
-    [[nodiscard]] static std::expected<InlineHook, Error> create(T target, U destination, Flags flags = Default) {
+    [[nodiscard]] static Expected<InlineHook, Error> create(T target, U destination, Flags flags = Default) {
         return create(reinterpret_cast<void*>(target), reinterpret_cast<void*>(destination), flags);
     }
 
@@ -147,7 +146,7 @@ public:
     /// @param flags The flags to use.
     /// @return The InlineHook or an InlineHook::Error if an error occurred.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
-    [[nodiscard]] static std::expected<InlineHook, Error> create(
+    [[nodiscard]] static Expected<InlineHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, void* target, void* destination, Flags flags = Default);
 
     /// @brief Create an inline hook with a given Allocator.
@@ -158,7 +157,7 @@ public:
     /// @return The InlineHook or an InlineHook::Error if an error occurred.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
     template <typename T, typename U>
-    [[nodiscard]] static std::expected<InlineHook, Error> create(
+    [[nodiscard]] static Expected<InlineHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, T target, U destination, Flags flags = Default) {
         return create(allocator, reinterpret_cast<void*>(target), reinterpret_cast<void*>(destination), flags);
     }
@@ -324,10 +323,10 @@ public:
     }
 
     /// @brief Enable the hook.
-    [[nodiscard]] std::expected<void, Error> enable();
+    [[nodiscard]] Expected<void, Error> enable();
 
     /// @brief Disable the hook.
-    [[nodiscard]] std::expected<void, Error> disable();
+    [[nodiscard]] Expected<void, Error> disable();
 
     /// @brief Check if the hook is enabled.
     [[nodiscard]] bool enabled() const { return m_enabled; }
@@ -345,17 +344,16 @@ private:
     uint8_t* m_destination{};
     Allocation m_trampoline{};
     std::vector<uint8_t> m_original_bytes{};
-    uintptr_t m_trampoline_size{};
+    size_t m_trampoline_size{};
     std::recursive_mutex m_mutex{};
     bool m_enabled{};
     Type m_type{Type::Unset};
 
-    std::expected<void, Error> setup(
-        const std::shared_ptr<Allocator>& allocator, uint8_t* target, uint8_t* destination);
-    std::expected<void, Error> e9_hook(const std::shared_ptr<Allocator>& allocator);
+    Expected<void, Error> setup(const std::shared_ptr<Allocator>& allocator, uint8_t* target, uint8_t* destination);
+    Expected<void, Error> e9_hook(const std::shared_ptr<Allocator>& allocator);
 
 #if SAFETYHOOK_ARCH_X86_64
-    std::expected<void, Error> ff_hook(const std::shared_ptr<Allocator>& allocator);
+    Expected<void, Error> ff_hook(const std::shared_ptr<Allocator>& allocator);
 #endif
 
     void destroy();

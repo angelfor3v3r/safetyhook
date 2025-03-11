@@ -7,8 +7,10 @@ SAFETYHOOK_BUILD_DOCS = false
 SAFETYHOOK_BUILD_TEST = false
 SAFETYHOOK_BUILD_EXAMPLES = false
 SAFETYHOOK_AMALGAMATE = false
-SAFETYHOOK_FETCH_ZYDIS = true
+SAFETYHOOK_FETCH_ZYDIS = false
+SAFETYHOOK_FETCH_EXPECTED = false
 SAFETYHOOK_USE_CXXMODULES = false
+SAFETYHOOK_USE_EXPECTED = false
 
 [conditions]
 build-docs = "SAFETYHOOK_BUILD_DOCS"
@@ -19,7 +21,9 @@ windows-only-example = "SAFETYHOOK_BUILD_EXAMPLES AND WIN32"
 amalgamate = "SAFETYHOOK_AMALGAMATE"
 build-amalgamate-test = "SAFETYHOOK_BUILD_TEST AND SAFETYHOOK_AMALGAMATE"
 fetch-zydis = "SAFETYHOOK_FETCH_ZYDIS"
+fetch-expected = "SAFETYHOOK_FETCH_EXPECTED"
 find-zydis = "(NOT SAFETYHOOK_FETCH_ZYDIS) AND NOT (TARGET Zydis)"
+use-expected = "SAFETYHOOK_USE_EXPECTED"
 
 [fetch-content.ut]
 condition = "build-test"
@@ -50,6 +54,13 @@ add_library(Zydis::Zydis ALIAS Zydis)
 """
 EXCLUDE_FROM_ALL = true
 
+[fetch-content.expected]
+condition = "fetch-expected"
+git = "https://github.com/TartanLlama/expected"
+tag = "v1.1.0"
+shallow = true
+EXCLUDE_FROM_ALL = true
+
 [find-package.Doxygen]
 condition = "build-docs"
 required = true
@@ -63,6 +74,10 @@ condition = "find-zydis"
 config = true
 required = true
 
+# [find-package.expected]
+# condition = "use-expected"
+# required = true
+
 [target.safetyhook]
 type = "library"
 sources = ["src/*.cpp"]
@@ -73,9 +88,11 @@ include-directories = [
 compile-features = ["cxx_std_23"]
 alias = "safetyhook::safetyhook"
 link-libraries = ["Zydis::Zydis"]
+use-expected.link-libraries = ["tl::expected"]
 msvc.private-compile-options = ["/permissive-", "/W4", "/w14640", "/wd4251"]
 clang.private-compile-options = ["-Wall", "-Wextra", "-Wshadow", "-Wnon-virtual-dtor", "-pedantic"]
 gcc.private-compile-options = ["-Wall", "-Wextra", "-Wshadow", "-Wnon-virtual-dtor", "-pedantic"]
+use-expected.compile-definitions = ["SAFETYHOOK_USE_EXPECTED"]
 shared.compile-definitions = ["SAFETYHOOK_SHARED_LIB"]
 shared.private-compile-definitions = ["SAFETYHOOK_BUILDING"]
 cmake-after = """

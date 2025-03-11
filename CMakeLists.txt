@@ -29,8 +29,10 @@ option(SAFETYHOOK_BUILD_DOCS "" OFF)
 option(SAFETYHOOK_BUILD_TEST "" OFF)
 option(SAFETYHOOK_BUILD_EXAMPLES "" OFF)
 option(SAFETYHOOK_AMALGAMATE "" OFF)
-option(SAFETYHOOK_FETCH_ZYDIS "" ON)
+option(SAFETYHOOK_FETCH_ZYDIS "" OFF)
+option(SAFETYHOOK_FETCH_EXPECTED "" OFF)
 option(SAFETYHOOK_USE_CXXMODULES "" OFF)
+option(SAFETYHOOK_USE_EXPECTED "" OFF)
 
 project(safetyhook)
 
@@ -87,6 +89,21 @@ if(SAFETYHOOK_FETCH_ZYDIS) # fetch-zydis
 	add_library(Zydis::Zydis ALIAS Zydis)
 
 endif()
+if(SAFETYHOOK_FETCH_EXPECTED) # fetch-expected
+	message(STATUS "Fetching expected (v1.1.0)...")
+	FetchContent_Declare(expected
+		GIT_REPOSITORY
+			"https://github.com/TartanLlama/expected"
+		GIT_TAG
+			v1.1.0
+		GIT_SHALLOW
+			ON
+		EXCLUDE_FROM_ALL
+			ON
+	)
+	FetchContent_MakeAvailable(expected)
+
+endif()
 # Packages
 if(SAFETYHOOK_BUILD_DOCS) # build-docs
 	find_package(Doxygen REQUIRED)
@@ -119,6 +136,12 @@ target_sources(safetyhook PRIVATE ${safetyhook_SOURCES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${safetyhook_SOURCES})
 
 add_library(safetyhook::safetyhook ALIAS safetyhook)
+if(SAFETYHOOK_USE_EXPECTED) # use-expected
+	target_compile_definitions(safetyhook PUBLIC
+		SAFETYHOOK_USE_EXPECTED
+	)
+endif()
+
 if(BUILD_SHARED_LIBS) # shared
 	target_compile_definitions(safetyhook PUBLIC
 		SAFETYHOOK_SHARED_LIB
@@ -172,6 +195,12 @@ target_include_directories(safetyhook PUBLIC
 target_link_libraries(safetyhook PUBLIC
 	Zydis::Zydis
 )
+
+if(SAFETYHOOK_USE_EXPECTED) # use-expected
+	target_link_libraries(safetyhook PUBLIC
+		tl::expected
+	)
+endif()
 
 set(CMKR_TARGET safetyhook)
 if(SAFETYHOOK_USE_CXXMODULES)

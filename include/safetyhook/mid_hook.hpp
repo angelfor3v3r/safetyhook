@@ -72,8 +72,7 @@ public:
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note This will use the default global Allocator.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
-    [[nodiscard]] static std::expected<MidHook, Error> create(
-        void* target, MidHookFn destination_fn, Flags flags = Default);
+    [[nodiscard]] static Expected<MidHook, Error> create(void* target, MidHookFn destination_fn, Flags flags = Default);
 
     /// @brief Creates a new MidHook object.
     /// @param target The address of the function to hook.
@@ -83,8 +82,7 @@ public:
     /// @note This will use the default global Allocator.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
     template <typename T>
-    [[nodiscard]] static std::expected<MidHook, Error> create(
-        T target, MidHookFn destination_fn, Flags flags = Default) {
+    [[nodiscard]] static Expected<MidHook, Error> create(T target, MidHookFn destination_fn, Flags flags = Default) {
         return create(reinterpret_cast<void*>(target), destination_fn, flags);
     }
 
@@ -95,7 +93,7 @@ public:
     /// @param flags The flags to use.
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
-    [[nodiscard]] static std::expected<MidHook, Error> create(
+    [[nodiscard]] static Expected<MidHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, void* target, MidHookFn destination_fn, Flags flags = Default);
 
     /// @brief Creates a new MidHook object with a given Allocator.
@@ -107,7 +105,7 @@ public:
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
     template <typename T>
-    [[nodiscard]] static std::expected<MidHook, Error> create(
+    [[nodiscard]] static Expected<MidHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, T target, MidHookFn destination_fn, Flags flags = Default) {
         return create(allocator, reinterpret_cast<void*>(target), destination_fn, flags);
     }
@@ -145,10 +143,10 @@ public:
     explicit operator bool() const { return static_cast<bool>(m_stub); }
 
     /// @brief Enable the hook.
-    [[nodiscard]] std::expected<void, Error> enable();
+    [[nodiscard]] Expected<void, Error> enable();
 
     /// @brief Disable the hook.
-    [[nodiscard]] std::expected<void, Error> disable();
+    [[nodiscard]] Expected<void, Error> disable();
 
     /// @brief Check if the hook is enabled.
     [[nodiscard]] bool enabled() const { return m_hook.enabled(); }
@@ -159,7 +157,6 @@ private:
     Allocation m_stub{};
     MidHookFn m_destination{};
 
-    std::expected<void, Error> setup(
-        const std::shared_ptr<Allocator>& allocator, uint8_t* target, MidHookFn destination);
+    Expected<void, Error> setup(const std::shared_ptr<Allocator>& allocator, uint8_t* target, MidHookFn destination);
 };
 } // namespace safetyhook
